@@ -10,3 +10,5 @@ Die Jupyter-Dateien wurden bereits abgegeben und sind im wesentlichen unverände
 Im Ordner figures finden sich Abbildungen aus der Data_Visualization.
 
 Die Jupyter-Datei bzl. ML ist weniger als aufgeräumte Projektabgabe zu verstehen als mehr als "Spielwiese". Ich habe hier ein paar Sachen aus dem Kurs ausprobiert und dann eben gemerkt, dass sie für meine Zwecke nicht gut funktionieren. Um bei Bedarf einzelne Schritte nachvollziehen zu können, habe ich mich trotzdem dazu entschlossen, die Datei hochzuladend.
+
+Bei dep_app.py handelt es sich um die Streamlit-App.
