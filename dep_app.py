@@ -4,14 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
+#Seiteneinstellungen
 st.set_page_config(
     page_title="NHANES Depressionsanalyse",
     page_icon="🧠",
     layout="wide"
 )
 
-
+#DAten laden und zwischenspeichern
 @st.cache_data
 def load_data():
     df = pd.read_csv("NHANES_depression.csv")
@@ -21,7 +21,7 @@ def load_data():
 df = load_data()
 df_copy = df.copy()
 
-
+#BMI in Katergorien einteilen
 df_copy["BMI_Klasse"] = pd.cut(
     df_copy["BMXBMI"],
     bins=[0, 18.5, 25, 30, 100],
@@ -33,6 +33,7 @@ df_copy["BMI_Klasse"] = pd.cut(
     ]
 )
 
+#Feature-Namen für die Benutzeroberflächen
 feature_labels = {
     "RIAGENDR": "Geschlecht",
     "RIDAGEYR": "Alter",
@@ -46,6 +47,7 @@ feature_labels = {
     "DEPT": "Depressionsschwere"
 }
 
+# Kategoriale Werte in verständliche Beschreibungen übersetzen
 category_labels = {
 
     "RIAGENDR": {
@@ -84,6 +86,7 @@ category_labels = {
     }
 }
 
+#Funktion für Übersetzung kategorialer Werte
 def get_category_label(value, feature):
 
     if feature in category_labels:
@@ -94,6 +97,7 @@ def get_category_label(value, feature):
 
     return str(value)
 
+# Kategoriale und numerische Features definieren
 categorical_features = [
     "RIAGENDR",
     "DMDEDUC2",
@@ -111,15 +115,14 @@ numerical_features = [
 ]
 
 
-
+#Titel und Beschreibung
 st.title("🧠 NHANES – Analyse depressiver Symptomatik")
 
 st.write(
     "Analyse verschiedener soziodemografischer und gesundheitsbezogener Merkmale im Zusammenhang mit depressiver Symptomatik."
 )
 
-
-
+#Filter in der Seitenleiste
 st.sidebar.header("🔎 Filter")
 
 min_age = int(df_copy["RIDAGEYR"].min())
@@ -145,9 +148,10 @@ selected_gender = st.sidebar.selectbox(
 
 condition = st.sidebar.radio(
     "Gesundheitsstatus",
-    ["Alle", "Krank", "Gesund"]
+    ["Alle", "Krank (mit behandlungsbedürftiger depressiver Symptomatik)", "Gesund (ohne oder mit nur leichter - nicht behandlungsbedürftiger - Symptomatik)"]
 )
 
+#Daten anhand der Filter einschränken
 filtered_df = df_copy[
     (df_copy["RIDAGEYR"] >= age_range[0]) &
     (df_copy["RIDAGEYR"] <= age_range[1])
@@ -169,15 +173,14 @@ elif condition == "Gesund":
     ]
 
 
-
-
+#Tabs für die Analysebereiche 
 tab1, tab2 = st.tabs([
     "📊 Beschreibung der Strichprobe",
     "⚖️ Krank vs. Gesund"
 ])
 
 
-
+# Tab 1: Beschreibung der Stichprobe
 with tab1:
 
     st.header("📊 Beschreibung der Stichprobe")
@@ -187,6 +190,7 @@ with tab1:
     )
 
 
+    #Kennzahle der gefilterten Stichproben anzeigen
     col1, col2 = st.columns(2)
 
     with col1:
@@ -210,6 +214,8 @@ with tab1:
 
     st.divider()
 
+    
+    #Option zur Anzeige der gefilterten Rohdaten
     show_data = st.checkbox(
         "Rohdaten anzeigen"
     )
@@ -220,6 +226,7 @@ with tab1:
             use_container_width=True
         )
 
+    # Feature für die Darstellung wählen
     selected_feature = st.selectbox(
         "Merkmal auswählen",
         list(feature_labels.keys()),
@@ -230,6 +237,7 @@ with tab1:
         feature_labels[selected_feature]
     )
 
+    # Kategoriale Features als Balkendiagramme darstellen
     if selected_feature in categorical_features:
 
         plot_df = filtered_df[
@@ -244,6 +252,7 @@ with tab1:
 
         else:
 
+            # Häufigkeiten der Kategorien berechnen
             counts = plot_df.value_counts().sort_index()
 
 
@@ -255,6 +264,7 @@ with tab1:
                 for value in counts.index
             ]
 
+            #Balkendiagramm erstellen
             fig, ax = plt.subplots(
                 figsize=(10, 6)
             )
@@ -264,6 +274,7 @@ with tab1:
                 counts.values
             )
 
+            # Absolute Werte über den Balken anzeigen
             for bar, value in zip(
                 bars,
                 counts.values
@@ -277,6 +288,7 @@ with tab1:
                     va="bottom"
                 )
 
+            # Diagramm beschriften
             ax.set_xlabel(
                 feature_labels[selected_feature]
             )
@@ -304,6 +316,7 @@ with tab1:
 
             st.pyplot(fig)
 
+    # Numerische Features als Histogramm dastellen
     elif selected_feature in numerical_features:
 
         plot_df = filtered_df[
@@ -318,10 +331,12 @@ with tab1:
 
         else:
 
+            # Histogramm erstellen
             fig, ax = plt.subplots(
                 figsize=(10, 6)
             )
 
+            # Bei Alter die Balkenbreite an die einzelnen Altersjahre anpassen
             if selected_feature == "RIDAGEYR":
 
                 min_age_plot = int(plot_df.min())
@@ -337,6 +352,7 @@ with tab1:
                     rwidth=0.9
                 )
 
+            #  Für andere numerische Features 30 Klassen verwenden
             else:
 
                 ax.hist(
@@ -344,6 +360,7 @@ with tab1:
                     bins=30
                 )
 
+            # Diagramme beschriften
             ax.set_xlabel(
                 feature_labels[selected_feature]
             )
@@ -366,15 +383,16 @@ with tab1:
 
             st.pyplot(fig)
 
-
+# Tab 2: Vergleich der Gruppen
 with tab2:
 
     st.header("⚖️ Krank vs. Gesund")
 
     st.write(
-        "Vergleich der Personen mit keiner/leichter Symptomatik und behandlungsbedürftiger Symptomatik."
+        "Vergleich der Personen mit keiner/leichter Symptomatik (gesund) und behandlungsbedürftiger Symptomatik (krank)."
     )
 
+    # Kennzahlen der gefilterten Stichprobe anzeigen
     col1, col2 = st.columns(2)
 
     with col1:
@@ -396,6 +414,7 @@ with tab2:
                 "–"
             )
 
+    # Features für den Gruppenverleich festlegen
     comparison_features = [
         "RIDAGEYR",
         "ASH",
@@ -408,25 +427,30 @@ with tab2:
         "OCD150"
     ]
 
+    # Feature für den Vergleich auswählen
     comparison_feature = st.selectbox(
         "Merkmal für den Vergleich auswählen",
         comparison_features,
         format_func=lambda x: feature_labels[x]
     )
 
-    #Filter nach Depressionsschwere nicht verwendet:
+    # Vergleichsdaten anhand der Filter erstellen
+    # Filter nach Depressionsschwere nicht verwendet
     comparison_data = df_copy[
         (df_copy["DEPT"].isin([0, 1])) &
         (df_copy["RIDAGEYR"] >= age_range[0]) &
         (df_copy["RIDAGEYR"] <= age_range[1])
     ].copy()
 
+    # Optional nach Geschlecht filtern
     if selected_gender != "Alle":
 
         comparison_data = comparison_data[
             comparison_data["RIAGENDR"] == selected_gender
         ]
 
+
+    # Schlafdauer nach Depressionsschwere vergleichen
     if comparison_feature == "ASH":
 
         plot_df = comparison_data[
@@ -441,6 +465,7 @@ with tab2:
 
         else:
 
+            # Violinplot zur Darstellung der Schlafdauer erstellen
             fig, ax = plt.subplots(
                 figsize=(10, 6)
             )
@@ -479,6 +504,8 @@ with tab2:
 
             st.pyplot(fig)
 
+            
+            # Mittelwerte und Gruppengrößen berechnen
             means = (
                 plot_df
                 .groupby("DEPT")[
@@ -514,6 +541,7 @@ with tab2:
                     )
                     st.caption(f"n = {counts[1]}")
 
+    # Anteil behandlungsbedürftiger Symptomatik nach BMI-Klasse
     elif comparison_feature == "BMI_Klasse":
 
         plot_df = comparison_data[
@@ -528,6 +556,7 @@ with tab2:
 
         else:
 
+            # Prozentualen Anteil je BMI-Klasse berechnen
             sick_percentage = (
                 plot_df
                 .groupby(
@@ -602,6 +631,7 @@ with tab2:
                 "Die Prozentwerte zeigen innerhalb jeder BMI-Klasse, wie viel Prozent der Personen behandlungsbedürftige depressive Symptomatik aufweisen."
             )
 
+     # Numerische Features als Boxplot vergleichen
     elif comparison_feature in [
         "RIDAGEYR",
         "BMXBMI",
@@ -620,6 +650,7 @@ with tab2:
 
         else:
 
+            # Boxplot zur Darstellung der Gruppenunterschiede
             fig, ax = plt.subplots(
                 figsize=(10, 6)
             )
@@ -692,6 +723,8 @@ with tab2:
                     )
                     st.caption(f"n = {counts[1]}")
 
+    
+    # Kategoriale Features als Balkendiagramm vergleichen
     elif comparison_feature in [
         "RIAGENDR",
         "DMDEDUC2",
@@ -712,6 +745,7 @@ with tab2:
 
         else:
  
+            # Prozentualen Anteil je Kategorie berechnen
             percentage_sick = (
                 plot_df
                 .groupby(
